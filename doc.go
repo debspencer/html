@@ -3,6 +3,7 @@ package html
 import (
 	"html"
 	"io"
+	"sort"
 	"strconv"
 )
 
@@ -11,6 +12,8 @@ import (
 type BaseElement interface {
 	// AddAttr adds a key/value attribute to an Element
 	AddAttr(key string, value string)
+	GetAttr(key string) string
+	Style(key string, value string)
 
 	GetAttrs() string
 
@@ -32,6 +35,7 @@ type Element interface {
 type TextElement struct {
 	Attributes
 	text string
+	raw  bool
 }
 
 func Text(text string) *TextElement {
@@ -42,7 +46,18 @@ func (t *TextElement) Write(tw *TagWriter) {
 }
 
 func (t *TextElement) WriteContent(tw *TagWriter) {
-	tw.WriteString(html.EscapeString(t.text))
+	s := t.text
+	if !t.raw {
+		s = html.EscapeString(s)
+	}
+	tw.WriteString(s)
+}
+
+func Raw(text string) *TextElement {
+	return &TextElement{
+		text: text,
+		raw:  true,
+	}
 }
 
 type MetaElement struct {
@@ -77,11 +92,26 @@ func Image(src string) *ImageElement {
 	img.AddAttr("src", src)
 	return img
 }
-func (t *ImageElement) Write(tw *TagWriter) {
-	tw.WriteTag(TagImg, t)
+func (e *ImageElement) Height(h int) *ImageElement {
+	e.AddAttr("heigth", strconv.Itoa(h))
+	return e
+}
+func (e *ImageElement) Width(w int) *ImageElement {
+	e.AddAttr("width", strconv.Itoa(w))
+	return e
 }
 
-func (t *ImageElement) WriteContent(tw *TagWriter) {
+func (e *ImageElement) AddMap(m *MapElement) *ImageElement {
+	name := m.GetAttr("name")
+	e.AddAttr("usemap", "#"+name)
+	return e
+}
+
+func (e *ImageElement) Write(tw *TagWriter) {
+	tw.WriteTag(TagImg, e)
+}
+
+func (e *ImageElement) WriteContent(tw *TagWriter) {
 }
 
 // Attributes is a contaner for element attributes, implements BaseElement
@@ -98,14 +128,45 @@ func (a *Attributes) AddAttr(key string, value string) {
 	a.attrs[key] = value
 }
 
+func (a *Attributes) GetAttr(key string) string {
+	return a.attrs[key]
+}
+
+// StyleAttr will all a style key/value attribute to an element
+func (a *Attributes) Style(key string, value string) {
+	if a.attrs == nil {
+		a.attrs = make(map[string]string)
+	}
+	style := a.attrs["style"]
+	if len(style) > 0 {
+		style += ";"
+	}
+	style += key + ":" + value
+
+	a.attrs["style"] = style
+}
+
 // GetAttr will return a serialized list of attrs in the form of ` attr1="attr" attr2="attr"`
 func (a *Attributes) GetAttrs() string {
 	if len(a.attrs) == 0 {
 		return ""
 	}
 	var ret string
-	for k, v := range a.attrs {
-		ret += " " + k + `="` + v + `"`
+	keys := make([]string, 0, len(a.attrs))
+	for k := range a.attrs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := a.attrs[k]
+		switch v {
+		case "false":
+		case "true":
+			ret += " " + k
+		default:
+			ret += " " + k + `="` + v + `"`
+		}
 	}
 	return ret
 }
@@ -208,7 +269,8 @@ func (br *BreakElement) WriteContent(tw *TagWriter) {
 }
 
 type NonBreakingSpace struct {
-	count int
+	Attributes // does not implement
+	count      int
 }
 
 func Nbsp(n ...int) *NonBreakingSpace {
@@ -222,4 +284,6 @@ func (nbsp *NonBreakingSpace) Write(tw *TagWriter) {
 	for i := 0; i < nbsp.count; i++ {
 		tw.WriteString("&nbsp;")
 	}
+}
+func (nbsp *NonBreakingSpace) WriteContent(tw *TagWriter) {
 }

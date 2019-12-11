@@ -1,5 +1,11 @@
 package html
 
+import (
+	"database/sql"
+	"fmt"
+	"strconv"
+)
+
 // Table is the contaner for a table
 type TableElement struct {
 	Attributes
@@ -21,8 +27,12 @@ type CellElement struct {
 }
 
 // Table returns a TableElement object
-func Table() *TableElement {
-	return &TableElement{}
+func Table(name ...string) *TableElement {
+	table := &TableElement{}
+	if len(name) > 0 {
+		table.AddAttr("name", name[0])
+	}
+	return table
 }
 
 // Write writes the HTML table tag and table data
@@ -84,9 +94,54 @@ func (row *RowElement) Cell(e Element) *CellElement {
 	return cell
 }
 
+// Cells adds multiple elements to the table
+func (row *RowElement) Cells(elements ...Element) {
+	if len(elements) == 0 {
+		row.CellString("")
+		return
+	}
+	for _, e := range elements {
+		row.Cell(e)
+	}
+}
+
 // CellString adds an string element to the table
-func (row *RowElement) CellString(s string) {
-	row.Cell(Text(s))
+func (row *RowElement) CellString(s string) *CellElement {
+	return row.Cell(Text(s))
+}
+
+// CellStrings adds an string element to the table
+func (row *RowElement) CellStrings(ss ...string) {
+	for _, s := range ss {
+		row.CellString(s)
+	}
+}
+
+// CellString adds an string element to the table
+func (row *RowElement) CellInt(value interface{}) *CellElement {
+	var text string
+	switch value.(type) {
+	case sql.NullInt64:
+		sv := value.(sql.NullInt64)
+		if sv.Valid {
+			text = strconv.FormatInt(sv.Int64, 10)
+		}
+	default:
+		text = fmt.Sprintf("%d", value)
+	}
+	return row.Cell(Text(text))
+}
+
+// CellStrings adds an string element to the table
+func (row *RowElement) CellInts(is ...int) {
+	for _, i := range is {
+		row.CellInt(i)
+	}
+}
+
+func (row *RowElement) Rowspan(n int) *RowElement {
+	row.AddAttr("rowspan", strconv.Itoa(n))
+	return row
 }
 
 // Write writes the HTML table row tag and row and column
@@ -99,4 +154,32 @@ func (cell *CellElement) WriteContent(tw *TagWriter) {
 	if cell.data != nil {
 		cell.data.Write(tw)
 	}
+}
+
+func (cell *CellElement) Colspan(n int) *CellElement {
+	cell.AddAttr("colspan", strconv.Itoa(n))
+	return cell
+}
+
+func (cell *CellElement) Bg(color string) *CellElement {
+	cell.Style("background-color", color)
+	return cell
+}
+
+func (cell *CellElement) Fg(color string) *CellElement {
+	cell.Style("color", color)
+	return cell
+}
+
+func (cell *CellElement) Center() *CellElement {
+	cell.Style("text-align", "center")
+	return cell
+}
+func (cell *CellElement) Right() *CellElement {
+	cell.Style("text-align", "right")
+	return cell
+}
+func (cell *CellElement) Left() *CellElement {
+	cell.Style("text-align", "left")
+	return cell
 }
