@@ -139,11 +139,6 @@ func (row *RowElement) CellInts(is ...int) {
 	}
 }
 
-func (row *RowElement) Rowspan(n int) *RowElement {
-	row.AddAttr("rowspan", strconv.Itoa(n))
-	return row
-}
-
 // Write writes the HTML table row tag and row and column
 func (cell *CellElement) Write(tw *TagWriter) {
 	tw.WriteTag(cell.tagType, cell)
@@ -158,6 +153,11 @@ func (cell *CellElement) WriteContent(tw *TagWriter) {
 
 func (cell *CellElement) Colspan(n int) *CellElement {
 	cell.AddAttr("colspan", strconv.Itoa(n))
+	return cell
+}
+
+func (cell *CellElement) Rowspan(n int) *CellElement {
+	cell.AddAttr("rowspan", strconv.Itoa(n))
 	return cell
 }
 
