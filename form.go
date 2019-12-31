@@ -20,6 +20,15 @@ func Form(action *URL) *FormElement {
 	return f
 }
 
+func (f *FormElement) SetTarget(target string) *FormElement {
+	f.AddAttr("target", target)
+	return f
+}
+
+func (f *FormElement) NewTab() *FormElement {
+	return f.SetTarget("_blank")
+}
+
 func (f *FormElement) SetName(name string) *FormElement {
 	f.AddAttr("name", name)
 	return f
@@ -33,7 +42,7 @@ func (f *FormElement) validateFunc() string {
 	return "webForm_" + name + "_Validate"
 }
 
-func (f *FormElement) MethodPOST(tw *TagWriter) *FormElement {
+func (f *FormElement) MethodPOST() *FormElement {
 	f.AddAttr("method", "POST")
 	return f
 }
