@@ -19,7 +19,8 @@ type URL struct {
 	Port     string
 	App      string
 	Page     string
-	Query    map[string]string
+	RawQuery string
+	Query    url.Values
 	Anchor   string
 }
 
@@ -30,10 +31,10 @@ func NewLink(link string) *URL {
 			Page: link,
 		}
 	}
-	return NewURL(u)
+	return NewURL(u, nil)
 }
 
-func NewURL(u *url.URL) *URL {
+func NewURL(u *url.URL, formValues url.Values) *URL {
 	hp := strings.SplitN(u.Host, ":", 2)
 	port := ""
 	if len(hp) > 1 {
@@ -46,35 +47,41 @@ func NewURL(u *url.URL) *URL {
 		page = path[1]
 	}
 
-	r := &URL{
-		Scheme: u.Scheme,
-		Host:   hp[0],
-		Port:   port,
-		App:    app,
-		Page:   page,
-		Query:  make(map[string]string),
-		Anchor: u.Fragment,
+	if formValues == nil {
+		formValues = make(url.Values)
+		rq := strings.Split(u.RawQuery, "&")
+
+		for _, q := range rq {
+			if len(q) == 0 {
+				continue
+			}
+			qs := strings.SplitN(q, "=", 2)
+			k := qs[0]
+			v := ""
+			if len(q) > 1 {
+				v = qs[1]
+			}
+			v, _ = url.QueryUnescape(v)
+			formValues[k] = append(formValues[k], v)
+		}
 	}
 
-	rq := strings.Split(u.RawQuery, "&")
-	for _, q := range rq {
-		if len(q) == 0 {
-			continue
-		}
-		qs := strings.SplitN(q, "=", 2)
-		k := qs[0]
-		v := ""
-		if len(q) > 1 {
-			v = qs[1]
-		}
-		r.Query[k] = v
+	r := &URL{
+		Scheme:   u.Scheme,
+		Host:     hp[0],
+		Port:     port,
+		App:      app,
+		Page:     page,
+		RawQuery: u.RawQuery,
+		Query:    formValues,
+		Anchor:   u.Fragment,
 	}
 	return r
 }
 
 func (u *URL) Clone() *URL {
 	// need to deep copy query map
-	q := make(map[string]string)
+	q := make(url.Values)
 	for k, v := range u.Query {
 		q[k] = v
 	}
@@ -99,16 +106,20 @@ func (u *URL) SetPage(page string) *URL {
 }
 
 func (u *URL) GetQuery(k string) string {
-	s, _ := url.QueryUnescape(u.Query[k])
-	return s
+	s, _ := u.Query[k]
+	if len(s) == 0 {
+		return ""
+	}
+	return s[0]
 }
 
 func (u *URL) GetQueryInt(k string) (int, bool) {
-	s, err := url.QueryUnescape(u.Query[k])
-	if err != nil {
+	s := u.Query[k]
+	if len(s) == 0 {
 		return 0, false
 	}
-	i, err := strconv.Atoi(s)
+
+	i, err := strconv.Atoi(s[0])
 	if err != nil {
 		return 0, false
 	}
@@ -122,9 +133,9 @@ func (u *URL) HasQuery(k string) bool {
 
 func (u *URL) AddQuery(k string, v interface{}) *URL {
 	if u.Query == nil {
-		u.Query = make(map[string]string)
+		u.Query = make(map[string][]string)
 	}
-	u.Query[k] = fmt.Sprintf("%v", v)
+	u.Query[k] = []string{fmt.Sprintf("%v", v)}
 	return u
 }
 
@@ -168,16 +179,18 @@ func (u *URL) Link() string {
 	}
 	if len(u.Query) > 0 {
 		first := true
-		for k, v := range u.Query {
-			if first {
-				sb.WriteString("?")
-				first = false
-			} else {
-				sb.WriteString("&")
+		for k, vs := range u.Query {
+			for _, v := range vs {
+				if first {
+					sb.WriteString("?")
+					first = false
+				} else {
+					sb.WriteString("&")
+				}
+				sb.WriteString(k)
+				sb.WriteString("=")
+				sb.WriteString(v)
 			}
-			sb.WriteString(k)
-			sb.WriteString("=")
-			sb.WriteString(v)
 		}
 	}
 	if len(u.Anchor) > 0 {
