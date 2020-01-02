@@ -49,6 +49,7 @@ var (
 	TagMeta     = HtmlTag{Open: "<meta>",     Close: ""}
 	TagOl       = HtmlTag{Open: "<ol>",       Close: "</ol>"}
 	TagOption   = HtmlTag{Open: "<option>",   Close: "</option>"}
+	TagPre      = HtmlTag{Open: "<pre>",      Close: "</pre>"}
 	TagScript   = HtmlTag{Open: "<script>",   Close: "</script>"}
 	TagSelect   = HtmlTag{Open: "<select>",   Close: "</select>"}
 	TagStyle    = HtmlTag{Open: "<style>",    Close: "</style>"}

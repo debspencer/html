@@ -60,6 +60,29 @@ func Raw(text string) *TextElement {
 	}
 }
 
+type IOReaderElement struct {
+	Attributes
+	reader io.Reader
+}
+
+// IoReader will add an io.Reader element
+// In most cases, data to be rendered is know ahead of time, but in the case of pre, it might be slow in coming, so alow the reader to fill in as it goes
+func IOReader(r io.Reader) *IOReaderElement {
+	return &IOReaderElement{
+		reader: r,
+	}
+}
+
+// Write writes the HTML tag and html data
+func (e *IOReaderElement) Write(tw *TagWriter) {
+	tw.WriteTag(TagNone, e)
+}
+
+// Write writes the HTML for the pre
+func (e *IOReaderElement) WriteContent(tw *TagWriter) {
+	io.Copy(tw.w, e.reader)
+}
+
 type MetaElement struct {
 	Attributes
 	text string
@@ -286,4 +309,21 @@ func (nbsp *NonBreakingSpace) Write(tw *TagWriter) {
 	}
 }
 func (nbsp *NonBreakingSpace) WriteContent(tw *TagWriter) {
+}
+
+type PreElement struct {
+	Container
+}
+
+func Pre(elements ...Element) *PreElement {
+	pre := &PreElement{}
+	if len(elements) > 0 {
+		pre.Add(elements...)
+	}
+	return pre
+}
+
+// Write writes the HTML tag and html data for the pre element
+func (pre *PreElement) Write(tw *TagWriter) {
+	tw.WriteTag(TagPre, pre)
 }
