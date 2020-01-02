@@ -29,6 +29,6 @@ func Center(elements ...Element) *DivElement {
 func Error(text string) *DivElement {
 	div := Div()
 	div.Add(Text(text))
-	div.AddAttr("background-color", "red")
+	div.AddAttr("style", "color:red;")
 	return div
 }
