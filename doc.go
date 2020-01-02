@@ -83,6 +83,30 @@ func (e *IOReaderElement) WriteContent(tw *TagWriter) {
 	io.Copy(tw.w, e.reader)
 }
 
+type IOReadCloserElement struct {
+	Attributes
+	reader io.ReadCloser
+}
+
+// IoReaderCloser will add an io.Reader element, and then close when done
+// In most cases, data to be rendered is know ahead of time, but in the case of pre, it might be slow in coming, so alow the reader to fill in as it goes
+func IOReadCloser(r io.ReadCloser) *IOReadCloserElement {
+	return &IOReadCloserElement{
+		reader: r,
+	}
+}
+
+// Write writes the HTML tag and html data
+func (e *IOReadCloserElement) Write(tw *TagWriter) {
+	tw.WriteTag(TagNone, e)
+}
+
+// Write writes the HTML for the pre
+func (e *IOReadCloserElement) WriteContent(tw *TagWriter) {
+	io.Copy(tw.w, e.reader)
+	e.reader.Close()
+}
+
 type MetaElement struct {
 	Attributes
 	text string
