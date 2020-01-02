@@ -4,7 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 )
+
+var (
+	uniqueFormId uint64
+)
+
+func formName() string {
+	n := atomic.AddUint64(&uniqueFormId, 1)
+	return fmt.Sprintf("html_form_%d", n)
+}
 
 // Form is the contaner for a form
 type FormElement struct {
@@ -16,7 +26,12 @@ func Form(action *URL) *FormElement {
 	f := &FormElement{}
 	f.AddAttr("action", action.Link())
 	f.AddAttr("method", "GET")
-	f.AddAttr("name", "html_form") // This can be overriden by SetName
+	f.AddAttr("name", formName()) // This can be overriden by SetName
+	return f
+}
+
+func (f *FormElement) SetAction(action *URL) *FormElement {
+	f.AddAttr("action", action.Link())
 	return f
 }
 
