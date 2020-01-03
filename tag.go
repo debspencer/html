@@ -2,14 +2,14 @@ package html
 
 import (
 	"fmt"
-	"io"
+	"net/http"
 	"strings"
 )
 
 // TagWrite is the base struct for writing output
 // it contains an io write which the HTML document is rendered into
 type TagWriter struct {
-	w io.Writer
+	w http.ResponseWriter
 }
 
 // HtmlTag defines the open/close structure for the tag
@@ -65,7 +65,7 @@ var (
 )
 
 // NewTagWriter creates a TagWrite to render into an io.Writer
-func NewTagWriter(w io.Writer) *TagWriter {
+func NewTagWriter(w http.ResponseWriter) *TagWriter {
 	return &TagWriter{
 		w: w,
 	}

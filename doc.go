@@ -1,8 +1,10 @@
 package html
 
 import (
+	"bufio"
 	"html"
 	"io"
+	"net/http"
 	"sort"
 	"strconv"
 )
@@ -62,7 +64,8 @@ func Raw(text string) *TextElement {
 
 type IOReaderElement struct {
 	Attributes
-	reader io.Reader
+	reader     io.Reader
+	readcloser io.ReadCloser
 }
 
 // IoReader will add an io.Reader element
@@ -73,38 +76,46 @@ func IOReader(r io.Reader) *IOReaderElement {
 	}
 }
 
+// IoReaderCloser will add an io.ReadCloser element, and then close when done
+// In most cases, data to be rendered is know ahead of time, but in the case of pre, it might be slow in coming, so alow the reader to fill in as it goes
+func IOReadCloser(r io.ReadCloser) *IOReaderElement {
+	return &IOReaderElement{
+		readcloser: r,
+	}
+}
+
 // Write writes the HTML tag and html data
 func (e *IOReaderElement) Write(tw *TagWriter) {
 	tw.WriteTag(TagNone, e)
 }
 
-// Write writes the HTML for the pre
+// WriteContent writes the HTML for the pre
+// Will attempt to Flush the data one line at a time
 func (e *IOReaderElement) WriteContent(tw *TagWriter) {
-	io.Copy(tw.w, e.reader)
-}
-
-type IOReadCloserElement struct {
-	Attributes
-	reader io.ReadCloser
-}
-
-// IoReaderCloser will add an io.Reader element, and then close when done
-// In most cases, data to be rendered is know ahead of time, but in the case of pre, it might be slow in coming, so alow the reader to fill in as it goes
-func IOReadCloser(r io.ReadCloser) *IOReadCloserElement {
-	return &IOReadCloserElement{
-		reader: r,
+	var buf *bufio.Reader
+	if e.reader != nil {
+		buf = bufio.NewReader(e.reader)
+	} else {
+		buf = bufio.NewReader(e.readcloser)
 	}
-}
+	fl, _ := tw.w.(http.Flusher)
 
-// Write writes the HTML tag and html data
-func (e *IOReadCloserElement) Write(tw *TagWriter) {
-	tw.WriteTag(TagNone, e)
-}
-
-// Write writes the HTML for the pre
-func (e *IOReadCloserElement) WriteContent(tw *TagWriter) {
-	io.Copy(tw.w, e.reader)
-	e.reader.Close()
+	for {
+		d, err := buf.ReadBytes('\n')
+		if err != nil {
+			break
+		}
+		_, err = tw.w.Write(d)
+		if err != nil {
+			break
+		}
+		if fl != nil {
+			fl.Flush()
+		}
+	}
+	if e.readcloser != nil {
+		e.readcloser.Close()
+	}
 }
 
 type MetaElement struct {
@@ -262,7 +273,7 @@ func (doc *Document) Body() *BodyElement {
 }
 
 // Render will write the HTML document to the supplied io.Writer
-func (doc *Document) Render(w io.Writer) {
+func (doc *Document) Render(w http.ResponseWriter) {
 	tw := NewTagWriter(w)
 	//	switch doc.version {
 	//	case HTML4:
