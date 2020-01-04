@@ -27,6 +27,7 @@ var (
 	TagArea     = HtmlTag{Open: "<area>",     Close: ""}
 	TagBody     = HtmlTag{Open: "<body>",     Close: "</body>"}
 	TagBr       = HtmlTag{Open: "<br>",       Close: ""}
+	TagButton   = HtmlTag{Open: "<button>",   Close: "</button>"}
 	TagComment  = HtmlTag{Open: "<!--",       Close: "-->"}
 	TagDd       = HtmlTag{Open: "<dd>",       Close: "</dd>"}
 	TagDiv      = HtmlTag{Open: "<div>",      Close: "</div>"}

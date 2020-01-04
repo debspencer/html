@@ -8,12 +8,12 @@ import (
 )
 
 var (
-	uniqueFormId uint64
+	uniqueId uint64
 )
 
-func formName() string {
-	n := atomic.AddUint64(&uniqueFormId, 1)
-	return fmt.Sprintf("html_form_%d", n)
+func getUniqueId() string {
+	n := atomic.AddUint64(&uniqueId, 1)
+	return strconv.FormatUint(n, 10)
 }
 
 // Form is the contaner for a form
@@ -26,7 +26,7 @@ func Form(action *URL) *FormElement {
 	f := &FormElement{}
 	f.AddAttr("action", action.Link())
 	f.AddAttr("method", "GET")
-	f.AddAttr("name", formName()) // This can be overriden by SetName
+	f.AddAttr("name", "html_form_"+getUniqueId()) // This can be overriden by SetName
 	return f
 }
 
@@ -245,4 +245,30 @@ func (e *OptionElement) Write(tw *TagWriter) {
 }
 func (e *OptionElement) WriteContent(tw *TagWriter) {
 	tw.WriteString(e.display)
+}
+
+type ButtonElement struct {
+	Container
+	buttonText string
+}
+
+func Button(buttonText string) *ButtonElement {
+	return &ButtonElement{
+		buttonText: buttonText,
+	}
+}
+
+// OnClick will add an onclick javascipt
+func (e *ButtonElement) OnClick(js string) {
+	onclick := "onclick_" + getUniqueId()
+	e.AddJavaScript(onclick, js)
+	e.AddAttr("onclick", onclick+"();")
+}
+
+func (e *ButtonElement) Write(tw *TagWriter) {
+	tw.WriteTag(TagButton, e)
+}
+
+func (e *ButtonElement) WriteContent(tw *TagWriter) {
+	tw.WriteString(e.buttonText)
 }
