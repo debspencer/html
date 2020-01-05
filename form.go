@@ -62,7 +62,7 @@ func (f *FormElement) MethodPOST() *FormElement {
 	return f
 }
 
-func (f *FormElement) Validate(name string, msg string) *FormElement {
+func (f *FormElement) ValidateFilled(name string, msg string) *FormElement {
 	docname := "document." + f.formName() + "." + name
 
 	script := " if (" + docname + ".value.length < 1) {\n"
@@ -71,6 +71,10 @@ func (f *FormElement) Validate(name string, msg string) *FormElement {
 	script += "  return false;\n"
 	script += " }\n"
 
+	return f.AddValidation(script)
+}
+
+func (f *FormElement) AddValidation(script string) *FormElement {
 	f.AddJavaScript(f.validateFunc(), script)
 	return f
 }
