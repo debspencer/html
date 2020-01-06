@@ -146,6 +146,39 @@ func (i *InputElement) SetDefaultInt(value interface{}) *InputElement {
 	return i
 }
 
+type CheckboxElement struct {
+	Container
+
+	Name string
+}
+
+// Checkbox will create a check box name=value
+// use Checkbox.Label to add a string label or Checkbox.Add(element) to add a different kind of label
+func Checkbox(name string, value string) *CheckboxElement {
+	e := &CheckboxElement{}
+	e.AddAttr("type", "checkbox")
+	e.AddAttr("name", name)
+	e.AddAttr("value", value)
+	return e
+}
+
+func (e *CheckboxElement) Label(label string) *CheckboxElement {
+	e.Add(Text(label))
+	return e
+}
+
+func (e *CheckboxElement) SetChecked(checked bool) *CheckboxElement {
+	e.AddAttr("checked", strconv.FormatBool(checked))
+	return e
+}
+
+func (e *CheckboxElement) Write(tw *TagWriter) {
+	tw.WriteTag(TagInput, e)
+}
+func (e *CheckboxElement) WriteContent(tw *TagWriter) {
+	// use Add to add content
+}
+
 type LabelElement struct {
 	Attributes
 	label string
