@@ -175,9 +175,6 @@ func (e *CheckboxElement) SetChecked(checked bool) *CheckboxElement {
 func (e *CheckboxElement) Write(tw *TagWriter) {
 	tw.WriteTag(TagInput, e)
 }
-func (e *CheckboxElement) WriteContent(tw *TagWriter) {
-	// use Add to add content
-}
 
 type LabelElement struct {
 	Attributes
