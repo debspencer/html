@@ -25,6 +25,7 @@ var (
 	// go:nofmt
 	TagA        = HtmlTag{Open: "<a>",        Close: "</a>"}
 	TagArea     = HtmlTag{Open: "<area>",     Close: ""}
+	TagB        = HtmlTag{Open: "<b>",        Close: "</b>"}
 	TagBody     = HtmlTag{Open: "<body>",     Close: "</body>"}
 	TagBr       = HtmlTag{Open: "<br>",       Close: ""}
 	TagButton   = HtmlTag{Open: "<button>",   Close: "</button>"}
@@ -42,6 +43,8 @@ var (
 	TagH6       = HtmlTag{Open: "<h6>",       Close: "</h6>"}
 	TagHead     = HtmlTag{Open: "<head>",     Close: "</head>"}
 	TagHtml     = HtmlTag{Open: "<html>",     Close: "</html>"}
+	TagI        = HtmlTag{Open: "<i>",        Close: "</i>"}
+	TagIFrame   = HtmlTag{Open: "<iframe>",   Close: "</iframe>"}
 	TagImg      = HtmlTag{Open: "<img>",      Close: ""}
 	TagInput    = HtmlTag{Open: "<input>",    Close: ""}
 	TagLabel    = HtmlTag{Open: "<label>",    Close: "</label>"}
@@ -50,6 +53,7 @@ var (
 	TagMeta     = HtmlTag{Open: "<meta>",     Close: ""}
 	TagOl       = HtmlTag{Open: "<ol>",       Close: "</ol>"}
 	TagOption   = HtmlTag{Open: "<option>",   Close: "</option>"}
+	TagP        = HtmlTag{Open: "<p>",        Close: "</p>"}
 	TagPre      = HtmlTag{Open: "<pre>",      Close: "</pre>"}
 	TagScript   = HtmlTag{Open: "<script>",   Close: "</script>"}
 	TagSelect   = HtmlTag{Open: "<select>",   Close: "</select>"}

@@ -49,7 +49,7 @@ func (f *FormElement) SetName(name string) *FormElement {
 	return f
 }
 
-func (f *FormElement) formName() string {
+func (f *FormElement) FormName() string {
 	return f.GetAttr("name")
 }
 func (f *FormElement) validateFunc() string {
@@ -63,7 +63,7 @@ func (f *FormElement) MethodPOST() *FormElement {
 }
 
 func (f *FormElement) ValidateFilled(name string, msg string) *FormElement {
-	docname := "document." + f.formName() + "." + name
+	docname := "document." + f.FormName() + "." + name
 
 	script := " if (" + docname + ".value.length < 1) {\n"
 	script += "  alert(\"" + msg + "\");\n"

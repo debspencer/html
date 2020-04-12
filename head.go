@@ -1,5 +1,7 @@
 package html
 
+import "strconv"
+
 // Head defines the HTML head element
 type HeadElement struct {
 	Container
@@ -8,7 +10,7 @@ type HeadElement struct {
 	styles *StyleElement
 }
 
-func NewHead() *HeadElement {
+func Head() *HeadElement {
 	head := &HeadElement{
 		css:    NewCSS(),
 		styles: NewStyles(),
@@ -55,4 +57,27 @@ func (t *Title) Write(tw *TagWriter) {
 // WriteContent writes the HTML title
 func (t *Title) WriteContent(tw *TagWriter) {
 	tw.WriteString(t.Title)
+}
+
+type MetaElement struct {
+	Attributes
+	text string
+}
+
+// MetaRefresh will create a meta tag forcing a refresh in number of seconds.  Link is optional
+func MetaRefresh(seconds int, link string) *MetaElement {
+	m := &MetaElement{}
+	m.AddAttr("http-equiv", "refresh")
+	content := strconv.Itoa(seconds)
+	if len(link) > 0 {
+		content += "; URL=" + link
+	}
+	m.AddAttr("content", content)
+	return m
+}
+func (m *MetaElement) Write(tw *TagWriter) {
+	tw.WriteTag(TagMeta, m)
+}
+
+func (m *MetaElement) WriteContent(tw *TagWriter) {
 }

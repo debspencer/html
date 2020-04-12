@@ -7,6 +7,9 @@ import (
 	"testing"
 )
 
+func TestDocumentt(*testing.T) {
+}
+
 func TestDocumentWrite(t *testing.T) {
 	css := "supercss { font: bold; }"
 
@@ -18,7 +21,7 @@ func TestDocumentWrite(t *testing.T) {
 	doc := NewDocument()
 	doc.Head().AddTitle("My Document")
 	doc.AddStyle(style)
-	doc.AddCSS(CSS("loaded", css))
+	doc.AddCSS(CSS(css))
 
 	// tbl := Table(Row1(), Row2())
 
@@ -38,6 +41,7 @@ func TestDocumentWrite(t *testing.T) {
 	//	class.Add(tbl)
 	tbl.AddClass(class)
 	tbl.AddClassName("foo")
-	doc.Render(&b)
+
+	doc.IoRender(&b)
 	ioutil.WriteFile("/tmp/goodie.html", b.Bytes(), 0644)
 }

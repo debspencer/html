@@ -1,6 +1,6 @@
 package html
 
-// Head defines the HTML body element
+// DivElement is a container for the Div
 type DivElement struct {
 	Container
 }
@@ -14,7 +14,7 @@ func Div(elements ...Element) *DivElement {
 	return div
 }
 
-// Write writes the HTML body tag and body data
+// Write writes the Div and Contents
 func (div *DivElement) Write(tw *TagWriter) {
 	tw.WriteTag(TagDiv, div)
 }

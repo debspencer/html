@@ -1,12 +1,8 @@
 package html
 
 import (
-	"bufio"
-	"html"
 	"io"
 	"net/http"
-	"sort"
-	"strconv"
 )
 
 // BaseElement is an interface that all HTML Element tags inherit from that allows for attributes
@@ -34,209 +30,6 @@ type Element interface {
 	WriteContent(tw *TagWriter)
 }
 
-type TextElement struct {
-	Attributes
-	text string
-	raw  bool
-}
-
-func Text(text string) *TextElement {
-	return &TextElement{text: text}
-}
-func (t *TextElement) Write(tw *TagWriter) {
-	tw.WriteTag(TagNone, t)
-}
-
-func (t *TextElement) WriteContent(tw *TagWriter) {
-	s := t.text
-	if !t.raw {
-		s = html.EscapeString(s)
-	}
-	tw.WriteString(s)
-}
-
-func Raw(text string) *TextElement {
-	return &TextElement{
-		text: text,
-		raw:  true,
-	}
-}
-
-type IOReaderElement struct {
-	Attributes
-	reader     io.Reader
-	readcloser io.ReadCloser
-}
-
-// IoReader will add an io.Reader element
-// In most cases, data to be rendered is know ahead of time, but in the case of pre, it might be slow in coming, so alow the reader to fill in as it goes
-func IOReader(r io.Reader) *IOReaderElement {
-	return &IOReaderElement{
-		reader: r,
-	}
-}
-
-// IoReaderCloser will add an io.ReadCloser element, and then close when done
-// In most cases, data to be rendered is know ahead of time, but in the case of pre, it might be slow in coming, so alow the reader to fill in as it goes
-func IOReadCloser(r io.ReadCloser) *IOReaderElement {
-	return &IOReaderElement{
-		readcloser: r,
-	}
-}
-
-// Write writes the HTML tag and html data
-func (e *IOReaderElement) Write(tw *TagWriter) {
-	tw.WriteTag(TagNone, e)
-}
-
-// WriteContent writes the HTML for the pre
-// Will attempt to Flush the data one line at a time
-func (e *IOReaderElement) WriteContent(tw *TagWriter) {
-	var buf *bufio.Reader
-	if e.reader != nil {
-		buf = bufio.NewReader(e.reader)
-	} else {
-		buf = bufio.NewReader(e.readcloser)
-	}
-	fl, _ := tw.w.(http.Flusher)
-
-	for {
-		d, err := buf.ReadBytes('\n')
-		if err != nil {
-			break
-		}
-		_, err = tw.w.Write(d)
-		if err != nil {
-			break
-		}
-		if fl != nil {
-			fl.Flush()
-		}
-	}
-	if e.readcloser != nil {
-		e.readcloser.Close()
-	}
-}
-
-type MetaElement struct {
-	Attributes
-	text string
-}
-
-// MetaRefresh will create a meta tag forcing a refresh in number of seconds.  Link is optional
-func MetaRefresh(seconds int, link string) *MetaElement {
-	m := &MetaElement{}
-	m.AddAttr("http-equiv", "refresh")
-	content := strconv.Itoa(seconds)
-	if len(link) > 0 {
-		content += "; URL=" + link
-	}
-	m.AddAttr("content", content)
-	return m
-}
-func (m *MetaElement) Write(tw *TagWriter) {
-	tw.WriteTag(TagMeta, m)
-}
-
-func (m *MetaElement) WriteContent(tw *TagWriter) {
-}
-
-type ImageElement struct {
-	Attributes
-}
-
-func Image(src string) *ImageElement {
-	img := &ImageElement{}
-	img.AddAttr("src", src)
-	return img
-}
-func (e *ImageElement) Height(h int) *ImageElement {
-	e.AddAttr("heigth", strconv.Itoa(h))
-	return e
-}
-func (e *ImageElement) Width(w int) *ImageElement {
-	e.AddAttr("width", strconv.Itoa(w))
-	return e
-}
-
-func (e *ImageElement) AddMap(m *MapElement) *ImageElement {
-	name := m.GetAttr("name")
-	e.AddAttr("usemap", "#"+name)
-	return e
-}
-
-func (e *ImageElement) Write(tw *TagWriter) {
-	tw.WriteTag(TagImg, e)
-}
-
-func (e *ImageElement) WriteContent(tw *TagWriter) {
-}
-
-// Attributes is a contaner for element attributes, implements BaseElement
-type Attributes struct {
-	// attrs is a map of key/value attributes
-	attrs map[string]string
-}
-
-// AddAttr will all a key/value attribute to an element
-func (a *Attributes) AddAttr(key string, value string) {
-	if a.attrs == nil {
-		a.attrs = make(map[string]string)
-	}
-	a.attrs[key] = value
-}
-
-func (a *Attributes) GetAttr(key string) string {
-	return a.attrs[key]
-}
-
-// StyleAttr will all a style key/value attribute to an element
-func (a *Attributes) Style(key string, value string) {
-	if a.attrs == nil {
-		a.attrs = make(map[string]string)
-	}
-	style := a.attrs["style"]
-	if len(style) > 0 {
-		style += ";"
-	}
-	style += key + ":" + value
-
-	a.attrs["style"] = style
-}
-
-// GetAttr will return a serialized list of attrs in the form of ` attr1="attr" attr2="attr"`
-func (a *Attributes) GetAttrs() string {
-	if len(a.attrs) == 0 {
-		return ""
-	}
-	var ret string
-	keys := make([]string, 0, len(a.attrs))
-	for k := range a.attrs {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		v := a.attrs[k]
-		switch v {
-		case "false":
-		case "true":
-			ret += " " + k
-		default:
-			ret += " " + k + `="` + v + `"`
-		}
-	}
-	return ret
-}
-
-func (a *Attributes) AddClass(c *Class) {
-	a.AddAttr("class", c.Name)
-}
-
-func (a *Attributes) AddClassName(className string) {
-	a.AddAttr("class", className)
-}
-
 type Version int
 
 const (
@@ -252,12 +45,25 @@ type Document struct {
 	body    *BodyElement
 }
 
+type bufferWriter struct {
+	w io.Writer
+}
+
+func (b *bufferWriter) Header() http.Header {
+	return http.Header{}
+}
+func (b *bufferWriter) Write(d []byte) (int, error) {
+	return b.w.Write(d)
+}
+func (b *bufferWriter) WriteHeader(int) {
+}
+
 // NewDocument creates a new HTML Document container
 // This is the top level method
 func NewDocument( /* ver Version */ ) *Document {
 	return &Document{
 		//		version: ver,
-		head: NewHead(),
+		head: Head(),
 		body: &BodyElement{},
 	}
 }
@@ -284,6 +90,14 @@ func (doc *Document) Render(w http.ResponseWriter) {
 	doc.Write(tw)
 }
 
+func (doc *Document) IoRender(w io.Writer) {
+	bw := bufferWriter{
+		w: w,
+	}
+
+	doc.Render(&bw)
+}
+
 // Write writes the HTML tag and html data
 func (doc *Document) Write(tw *TagWriter) {
 	tw.WriteTag(TagHtml, doc)
@@ -303,62 +117,4 @@ func (doc *Document) AddStyle(style *Style) {
 // AddCSS will add a CSS into the document
 func (doc *Document) AddCSS(css *CSSData) {
 	doc.head.css.Add(css)
-}
-
-type BreakElement struct {
-	Attributes
-	count int
-}
-
-func Br(n ...int) *BreakElement {
-	count := 1
-	if len(n) > 0 {
-		count = n[0]
-	}
-	return &BreakElement{count: count}
-}
-func (br *BreakElement) Write(tw *TagWriter) {
-	for i := 0; i < br.count; i++ {
-		tw.WriteTag(TagBr, br)
-	}
-}
-
-func (br *BreakElement) WriteContent(tw *TagWriter) {
-}
-
-type NonBreakingSpace struct {
-	Attributes // does not implement
-	count      int
-}
-
-func Nbsp(n ...int) *NonBreakingSpace {
-	count := 1
-	if len(n) > 0 {
-		count = n[0]
-	}
-	return &NonBreakingSpace{count: count}
-}
-func (nbsp *NonBreakingSpace) Write(tw *TagWriter) {
-	for i := 0; i < nbsp.count; i++ {
-		tw.WriteString("&nbsp;")
-	}
-}
-func (nbsp *NonBreakingSpace) WriteContent(tw *TagWriter) {
-}
-
-type PreElement struct {
-	Container
-}
-
-func Pre(elements ...Element) *PreElement {
-	pre := &PreElement{}
-	if len(elements) > 0 {
-		pre.Add(elements...)
-	}
-	return pre
-}
-
-// Write writes the HTML tag and html data for the pre element
-func (pre *PreElement) Write(tw *TagWriter) {
-	tw.WriteTag(TagPre, pre)
 }
