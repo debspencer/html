@@ -58,7 +58,7 @@ func NewURL(u *url.URL, formValues url.Values) *URL {
 			qs := strings.SplitN(q, "=", 2)
 			k := qs[0]
 			v := ""
-			if len(q) > 1 {
+			if len(qs) > 1 {
 				v = qs[1]
 			}
 			v, _ = url.QueryUnescape(v)
