@@ -11,10 +11,19 @@ func Image(src string) *ImageElement {
 	img.AddAttr("src", src)
 	return img
 }
+func (e *ImageElement) H(h int) *ImageElement {
+	return e.Height(h)
+}
+
 func (e *ImageElement) Height(h int) *ImageElement {
-	e.AddAttr("heigth", strconv.Itoa(h))
+	e.AddAttr("height", strconv.Itoa(h))
 	return e
 }
+
+func (e *ImageElement) W(w int) *ImageElement {
+	return e.Width(w)
+}
+
 func (e *ImageElement) Width(w int) *ImageElement {
 	e.AddAttr("width", strconv.Itoa(w))
 	return e
