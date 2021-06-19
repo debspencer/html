@@ -25,6 +25,7 @@ var (
 	// go:nofmt
 	TagA        = HtmlTag{Open: "<a>",        Close: "</a>"}
 	TagArea     = HtmlTag{Open: "<area>",     Close: ""}
+	TagAudio    = HtmlTag{Open: "<audio>",    Close: "</audio>"}
 	TagB        = HtmlTag{Open: "<b>",        Close: "</b>"}
 	TagBody     = HtmlTag{Open: "<body>",     Close: "</body>"}
 	TagBr       = HtmlTag{Open: "<br>",       Close: ""}
@@ -57,6 +58,7 @@ var (
 	TagPre      = HtmlTag{Open: "<pre>",      Close: "</pre>"}
 	TagScript   = HtmlTag{Open: "<script>",   Close: "</script>"}
 	TagSelect   = HtmlTag{Open: "<select>",   Close: "</select>"}
+	TagSource   = HtmlTag{Open: "<source>",   Close: ""}
 	TagStyle    = HtmlTag{Open: "<style>",    Close: "</style>"}
 	TagTable    = HtmlTag{Open: "<table>",    Close: "</table>"}
 	TagTd       = HtmlTag{Open: "<td>",       Close: "</td>"}
